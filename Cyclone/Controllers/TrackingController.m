@@ -12,11 +12,19 @@
 
 @interface TrackingController() <CLLocationManagerDelegate>
 @property(nonatomic, strong) CLLocationManager *locationManager;
-@property(nonatomic, strong) IBOutlet UIButton *startTrackingButton;
-@property(nonatomic, strong) IBOutlet UILabel  *alertLabel;
+@property(nonatomic, strong) IBOutlet UIButton *btnStartTracking;
+@property(nonatomic, strong) IBOutlet UILabel  *lblStatus;
+@property(nonatomic, strong) IBOutlet UISwitch *swtHighAccuracy;
+@property(nonatomic, assign) BOOL wasHighAccuracy;
+@property(nonatomic, assign) BOOL startedTracking;
 
+- (void)switchTrackingMode:(BOOL)highAccuracy;
+
+- (IBAction)onSwitchChange:(id)sender;
 - (IBAction)startTracking:(id)sender;
 - (void)startLoading;
+- (void)onWillResignActiveNotification:(NSNotification*)notification;
+- (void)onDidBecomeActiveNotification:(NSNotification*)notification;
 
 - (void)updateLocationToServer:(CLLocation *)newLocation;
 @end
@@ -26,15 +34,12 @@
 @implementation TrackingController
 
 @synthesize locationManager;
-@synthesize startTrackingButton;
-@synthesize alertLabel;
+@synthesize btnStartTracking;
+@synthesize lblStatus;
+@synthesize swtHighAccuracy;
+@synthesize wasHighAccuracy;
+@synthesize startedTracking;
 
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Release any cached data, images, etc that aren't in use.
-}
 
 #pragma mark - View lifecycle
 
@@ -42,44 +47,97 @@
 {
     [super viewDidLoad];
     
+    self.startedTracking = NO;
+    
     self.locationManager = [[CLLocationManager alloc] init];
     self.locationManager.delegate = self;
     
-    //Only applies when in foreground otherwise it is very significant changes
-    [locationManager setDesiredAccuracy:kCLLocationAccuracyBest];
+    //Set reasonble accuracy for our application (high accuracy mode only)
+    [locationManager setDesiredAccuracy:kCLLocationAccuracyNearestTenMeters];
+    
+    NSNotificationCenter *defaultCenter = [NSNotificationCenter defaultCenter];
+    [defaultCenter addObserver:self selector:@selector(onWillResignActiveNotification:) name:WILL_RESIGN_ACTIVE_NOTIFICATION object:nil];
+    [defaultCenter addObserver:self selector:@selector(onDidBecomeActiveNotification:) name:DID_BECOME_ACTIVE_NOTIFICATION object:nil];
+
 }
 
-- (void)viewDidUnload
+
+#pragma mark - Tracking
+
+- (void)switchTrackingMode:(BOOL)highAccuracy
 {
-    [super viewDidUnload];
-    // Release any retained subviews of the main view.
-    // e.g. self.myOutlet = nil;
+    if (!self.startedTracking)
+        return;
+    if (highAccuracy)
+    {
+        NSLog(@"Switch to high accuracy mode");
+        [locationManager stopMonitoringSignificantLocationChanges];
+        [locationManager startUpdatingLocation];        
+    }
+    else 
+    {
+        NSLog(@"Switch to low accuracy mode");
+        [locationManager stopUpdatingLocation];
+        [locationManager startMonitoringSignificantLocationChanges];
+    }
 }
+
 
 #pragma mark - UI events
 
+- (IBAction)onSwitchChange:(id)sender
+{
+    if (!self.startedTracking)
+        return;
+    [self switchTrackingMode:self.swtHighAccuracy.on];
+}
+
 - (IBAction)startTracking:(id)sender
 {
+    self.startedTracking = YES;
+    self.btnStartTracking.enabled = NO;
     [self startLoading];
 }
 
-- (void)startLoading {
-    
+- (void)startLoading
+{
     BOOL isReachable = [[Reachability reachabilityForInternetConnection] isReachable] || [[Reachability reachabilityWithHostName:@"google.com"] isReachable];
     
     if (isReachable) {
-        //[locationManager startUpdatingLocation];
-        [locationManager startMonitoringSignificantLocationChanges];
+        [self switchTrackingMode:self.swtHighAccuracy.on];
         return;
     }
     
     NSString *noInternetConnectionString = @"No Internet Connection";
-    if (![self.alertLabel.text isEqualToString:noInternetConnectionString])
-        self.alertLabel.text = noInternetConnectionString;
-    
-    [self performSelector:@selector(startLoading) withObject:nil afterDelay:10];
+    if (![self.lblStatus.text isEqualToString:noInternetConnectionString])
+        self.lblStatus.text = noInternetConnectionString;
+
+    //Retry after 20 seconds if no internet
+    [self performSelector:@selector(startLoading) withObject:nil afterDelay:20];
 }
 
+- (void)onWillResignActiveNotification:(NSNotification*)notification 
+{
+    self.wasHighAccuracy = self.swtHighAccuracy.on;
+    if (!self.startedTracking)
+        return;
+    
+    //Going to background mode, switch to low power tracking
+    [self.swtHighAccuracy setOn:NO animated:NO];
+    [self switchTrackingMode:self.swtHighAccuracy.on];
+}
+
+- (void)onDidBecomeActiveNotification:(NSNotification*)notification
+{
+    if (!self.startedTracking)
+        return;
+    
+    //Switch back to high accuracy mode if before going background we were using that mode
+    if (self.wasHighAccuracy) {
+        [self.swtHighAccuracy setOn:YES animated:NO];
+        [self switchTrackingMode:YES];
+    }
+}
 
 #pragma mark - CCLocationManagerDelegate
 
@@ -87,7 +145,7 @@
 {    
     CLLocationCoordinate2D currentCoordinates = newLocation.coordinate;
     NSString *locationString = [NSString stringWithFormat:@"Latitude: %.4f\nLongitude: %.4f", currentCoordinates.latitude, currentCoordinates.longitude];
-    self.alertLabel.text = locationString;
+    self.lblStatus.text = locationString;
     NSLog(@"Latitude: %.4f  Longitude: %.4f", currentCoordinates.latitude, currentCoordinates.longitude);
     
     [self updateLocationToServer:newLocation];
@@ -95,7 +153,7 @@
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    self.alertLabel.text = @"Unable to start location manager";
+    self.lblStatus.text = @"Unable to start location manager";
     NSLog(@"Unable to start location manager. Error:%@", [error description]);
 }
 
@@ -108,7 +166,7 @@
                                            completion:^(BOOL success, NSString *statusMessage, NSNumber *queue_id)
     {
         if (success)
-            NSLog(@"New event/queue Id: %d", queue_id.intValue);
+            NSLog(@"Location updated");
     }];
 }
 

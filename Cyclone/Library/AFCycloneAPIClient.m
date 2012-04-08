@@ -129,7 +129,7 @@
     [parameters setObject:[NSString stringWithFormat:@"%f", newLocation.coordinate.latitude] forKey:@"latitude"];
     [parameters setObject:[NSString stringWithFormat:@"%f", newLocation.horizontalAccuracy] forKey:@"accuracy"];
     
-    [[AFCycloneAPIClient sharedClient] postPath:kCycloneAPIPutEvent
+    [[AFCycloneAPIClient sharedClient] postPath:kCycloneAPIExtTrigger
                                      parameters:parameters
                                         success:^(AFHTTPRequestOperation *operation, id JSON)
      {

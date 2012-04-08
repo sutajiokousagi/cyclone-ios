@@ -12,6 +12,9 @@
     #import <UIKit/UIKit.h>
     #import <Foundation/Foundation.h>
     #import <CoreLocation/CoreLocation.h>
+    
+    // Constants
+    #import "AppConfig.h"
 
     // Models
     #import "Trigger.h"

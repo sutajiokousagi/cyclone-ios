@@ -3,8 +3,7 @@
 
 #define kCycloneAPIBaseURL              @"http://cyclone.torinnguyen.com"
 #define kCycloneAPIGetTriggers          @"/srv_get_triggers.php"
-#define kCycloneAPIPutEvent             @"/srv_put_event.php"
-#define kCycloneAPIPutRule              @"/srv_put_rule.php"
+#define kCycloneAPIExtTrigger           @"/srv_ext_trigger.php"
 #define kCycloneAPIModuleAlias          @"ios"
 
 #define kCycloneAPI_ws_service          @"ws_service"
