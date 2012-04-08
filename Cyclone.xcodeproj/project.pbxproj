@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		423E75BA1531EBF900F057F7 /* tracking_btn.png in Resources */ = {isa = PBXBuildFile; fileRef = 423E75B81531EBF900F057F7 /* tracking_btn.png */; };
 		423E75BB1531EBF900F057F7 /* tracking_btn@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 423E75B91531EBF900F057F7 /* tracking_btn@2x.png */; };
+		423E75C51531FA3800F057F7 /* stop_tracking_btn.png in Resources */ = {isa = PBXBuildFile; fileRef = 423E75C31531FA3800F057F7 /* stop_tracking_btn.png */; };
+		423E75C61531FA3800F057F7 /* stop_tracking_btn@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 423E75C41531FA3800F057F7 /* stop_tracking_btn@2x.png */; };
 		42C86F0715300DE40012EA2F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42C86F0615300DE40012EA2F /* UIKit.framework */; };
 		42C86F0915300DE40012EA2F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42C86F0815300DE40012EA2F /* Foundation.framework */; };
 		42C86F0B15300DE40012EA2F /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42C86F0A15300DE40012EA2F /* CoreGraphics.framework */; };
@@ -56,6 +58,8 @@
 		423E75B81531EBF900F057F7 /* tracking_btn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tracking_btn.png; sourceTree = "<group>"; };
 		423E75B91531EBF900F057F7 /* tracking_btn@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tracking_btn@2x.png"; sourceTree = "<group>"; };
 		423E75C21531F1D800F057F7 /* AppConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppConfig.h; sourceTree = "<group>"; };
+		423E75C31531FA3800F057F7 /* stop_tracking_btn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = stop_tracking_btn.png; sourceTree = "<group>"; };
+		423E75C41531FA3800F057F7 /* stop_tracking_btn@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "stop_tracking_btn@2x.png"; sourceTree = "<group>"; };
 		42C86F0215300DE40012EA2F /* Cyclone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cyclone.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		42C86F0615300DE40012EA2F /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		42C86F0815300DE40012EA2F /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -323,6 +327,8 @@
 				42F27AC5153075B0000F28B2 /* login_btn_pressed@2x.png */,
 				423E75B81531EBF900F057F7 /* tracking_btn.png */,
 				423E75B91531EBF900F057F7 /* tracking_btn@2x.png */,
+				423E75C31531FA3800F057F7 /* stop_tracking_btn.png */,
+				423E75C41531FA3800F057F7 /* stop_tracking_btn@2x.png */,
 			);
 			path = Login;
 			sourceTree = "<group>";
@@ -412,6 +418,8 @@
 				42F27ACD153075B0000F28B2 /* login_btn_pressed@2x.png in Resources */,
 				423E75BA1531EBF900F057F7 /* tracking_btn.png in Resources */,
 				423E75BB1531EBF900F057F7 /* tracking_btn@2x.png in Resources */,
+				423E75C51531FA3800F057F7 /* stop_tracking_btn.png in Resources */,
+				423E75C61531FA3800F057F7 /* stop_tracking_btn@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

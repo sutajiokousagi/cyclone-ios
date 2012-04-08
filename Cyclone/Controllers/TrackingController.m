@@ -12,7 +12,7 @@
 
 @interface TrackingController() <CLLocationManagerDelegate>
 @property(nonatomic, strong) CLLocationManager *locationManager;
-@property(nonatomic, strong) IBOutlet UIButton *btnStartTracking;
+@property(nonatomic, strong) IBOutlet UIButton *btnTracking;
 @property(nonatomic, strong) IBOutlet UILabel  *lblStatus;
 @property(nonatomic, strong) IBOutlet UISwitch *swtHighAccuracy;
 @property(nonatomic, strong) IBOutlet UIActivityIndicatorView *indicator;
@@ -20,10 +20,13 @@
 @property(nonatomic, assign) BOOL startedTracking;
 
 - (void)switchTrackingMode:(BOOL)highAccuracy;
+- (void)startTracking;
+- (void)stopTracking;
+
+- (void)updateUI;
 
 - (IBAction)onSwitchChange:(id)sender;
-- (IBAction)startTracking:(id)sender;
-- (void)startLoading;
+- (IBAction)onBtnTracking:(id)sender;
 - (void)onWillResignActiveNotification:(NSNotification*)notification;
 - (void)onDidBecomeActiveNotification:(NSNotification*)notification;
 
@@ -35,7 +38,7 @@
 @implementation TrackingController
 
 @synthesize locationManager;
-@synthesize btnStartTracking;
+@synthesize btnTracking;
 @synthesize lblStatus;
 @synthesize swtHighAccuracy;
 @synthesize indicator;
@@ -52,17 +55,14 @@
     [super viewDidLoad];
     
     self.startedTracking = NO;
+    [self updateUI];
     
     self.locationManager = [[CLLocationManager alloc] init];
     self.locationManager.delegate = self;
     
-    //Set reasonble accuracy for our application (high accuracy mode only)
-    [locationManager setDesiredAccuracy:kCLLocationAccuracyNearestTenMeters];
-    
     NSNotificationCenter *defaultCenter = [NSNotificationCenter defaultCenter];
     [defaultCenter addObserver:self selector:@selector(onWillResignActiveNotification:) name:WILL_RESIGN_ACTIVE_NOTIFICATION object:nil];
     [defaultCenter addObserver:self selector:@selector(onDidBecomeActiveNotification:) name:DID_BECOME_ACTIVE_NOTIFICATION object:nil];
-
 }
 
 
@@ -76,6 +76,9 @@
     {
         NSLog(@"Switch to high accuracy mode");
         [locationManager stopMonitoringSignificantLocationChanges];
+        
+        //Set reasonble accuracy for our application (high accuracy mode only)
+        [locationManager setDesiredAccuracy:kCLLocationAccuracyNearestTenMeters];
         [locationManager startUpdatingLocation];        
     }
     else 
@@ -86,6 +89,54 @@
     }
 }
 
+- (void)startTracking
+{
+    if (self.startedTracking)
+        return;
+    
+    BOOL isReachable = [[Reachability reachabilityForInternetConnection] isReachable] || [[Reachability reachabilityWithHostName:@"google.com"] isReachable];
+    
+    if (isReachable) {
+        self.startedTracking = YES;
+        [self updateUI];
+        [self switchTrackingMode:self.swtHighAccuracy.on];
+        return;
+    }
+    
+    self.lblStatus.text = @"No Internet Connection";   
+    self.startedTracking = NO;
+    [self updateUI];
+    
+    //Retry after 20 seconds if no internet
+    //[self performSelector:@selector(startTracking) withObject:nil afterDelay:20];
+}
+
+- (void)stopTracking
+{
+    if (!self.startedTracking)
+        return;
+    
+    if (self.swtHighAccuracy.on)    [locationManager stopUpdatingHeading];
+    else                            [locationManager stopMonitoringSignificantLocationChanges];
+    
+    self.startedTracking = NO;
+    [self updateUI];
+}
+
+
+#pragma mark - UI helpers
+
+- (void)updateUI
+{
+    if (self.startedTracking)
+    {
+        [self.btnTracking setImage:[UIImage imageNamed:@"stop_tracking_btn"] forState:UIControlStateNormal];
+    }
+    else
+    {
+        [self.btnTracking setImage:[UIImage imageNamed:@"tracking_btn"] forState:UIControlStateNormal];
+    }
+}
 
 #pragma mark - UI events
 
@@ -96,28 +147,10 @@
     [self switchTrackingMode:self.swtHighAccuracy.on];
 }
 
-- (IBAction)startTracking:(id)sender
+- (IBAction)onBtnTracking:(id)sender
 {
-    self.startedTracking = YES;
-    self.btnStartTracking.enabled = NO;
-    [self startLoading];
-}
-
-- (void)startLoading
-{
-    BOOL isReachable = [[Reachability reachabilityForInternetConnection] isReachable] || [[Reachability reachabilityWithHostName:@"google.com"] isReachable];
-    
-    if (isReachable) {
-        [self switchTrackingMode:self.swtHighAccuracy.on];
-        return;
-    }
-    
-    NSString *noInternetConnectionString = @"No Internet Connection";
-    if (![self.lblStatus.text isEqualToString:noInternetConnectionString])
-        self.lblStatus.text = noInternetConnectionString;
-
-    //Retry after 20 seconds if no internet
-    [self performSelector:@selector(startLoading) withObject:nil afterDelay:20];
+    if (!self.startedTracking)      [self startTracking];
+    else                            [self stopTracking];
 }
 
 - (void)onWillResignActiveNotification:(NSNotification*)notification 
@@ -135,6 +168,8 @@
 
 - (void)onDidBecomeActiveNotification:(NSNotification*)notification
 {
+    [self updateUI];
+    
     if (!self.startedTracking)
         return;
     
@@ -149,6 +184,9 @@
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation
 {
+    if (!self.startedTracking)
+        return;
+    
     CLLocationCoordinate2D currentCoordinates = newLocation.coordinate;
     NSString *locationString = [NSString stringWithFormat:@"Latitude: %.4f\nLongitude: %.4f", currentCoordinates.latitude, currentCoordinates.longitude];
     self.lblStatus.text = locationString;
@@ -159,7 +197,10 @@
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    self.lblStatus.text = @"Unable to start location manager";
+    if (!self.startedTracking)
+        return;
+
+    self.lblStatus.text = @"Unable to obtain current location";
     NSLog(@"Unable to start location manager. Error:%@", [error description]);
 }
 
@@ -168,6 +209,8 @@
 
 - (void)updateLocationToServer:(CLLocation *)newLocation
 {
+    if (!self.startedTracking)
+        return;
     [self.indicator startAnimating];
     
     [[AFCycloneAPIClient sharedClient] updateLocation:newLocation
