@@ -15,6 +15,7 @@
 @property(nonatomic, strong) IBOutlet UIButton *btnStartTracking;
 @property(nonatomic, strong) IBOutlet UILabel  *lblStatus;
 @property(nonatomic, strong) IBOutlet UISwitch *swtHighAccuracy;
+@property(nonatomic, strong) IBOutlet UIActivityIndicatorView *indicator;
 @property(nonatomic, assign) BOOL wasHighAccuracy;
 @property(nonatomic, assign) BOOL startedTracking;
 
@@ -37,8 +38,11 @@
 @synthesize btnStartTracking;
 @synthesize lblStatus;
 @synthesize swtHighAccuracy;
+@synthesize indicator;
+
 @synthesize wasHighAccuracy;
 @synthesize startedTracking;
+
 
 
 #pragma mark - View lifecycle
@@ -123,8 +127,10 @@
         return;
     
     //Going to background mode, switch to low power tracking
-    [self.swtHighAccuracy setOn:NO animated:NO];
-    [self switchTrackingMode:self.swtHighAccuracy.on];
+    if (self.wasHighAccuracy) {
+        [self.swtHighAccuracy setOn:NO animated:NO];
+        [self switchTrackingMode:self.swtHighAccuracy.on];
+    }
 }
 
 - (void)onDidBecomeActiveNotification:(NSNotification*)notification
@@ -142,7 +148,7 @@
 #pragma mark - CCLocationManagerDelegate
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation
-{    
+{
     CLLocationCoordinate2D currentCoordinates = newLocation.coordinate;
     NSString *locationString = [NSString stringWithFormat:@"Latitude: %.4f\nLongitude: %.4f", currentCoordinates.latitude, currentCoordinates.longitude];
     self.lblStatus.text = locationString;
@@ -162,11 +168,15 @@
 
 - (void)updateLocationToServer:(CLLocation *)newLocation
 {
+    [self.indicator startAnimating];
+    
     [[AFCycloneAPIClient sharedClient] updateLocation:newLocation
                                            completion:^(BOOL success, NSString *statusMessage, NSNumber *queue_id)
     {
         if (success)
             NSLog(@"Location updated");
+        
+        [self.indicator stopAnimating];
     }];
 }
 
